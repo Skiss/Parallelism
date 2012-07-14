@@ -6,6 +6,7 @@ set(
   SOURCES
   src/main.cpp
   src/img_processing.cpp
+  src/pipeline.cpp
   )
 
 find_package(OpenCV REQUIRED)
