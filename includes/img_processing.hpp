@@ -13,7 +13,7 @@
 
 namespace proc
 {
-cv::Mat blur(const cv::Mat& img, bool para = false);
+    cv::Mat* blur(const cv::Mat& img, bool para = false);
 };
 
 #endif /* _IMG_PROCESSING_H_ */
