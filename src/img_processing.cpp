@@ -3,11 +3,11 @@
 
 namespace proc
 {
-    cv::Mat* blur(const cv::Mat& img, bool para)
+    cv::Mat blur(const cv::Mat& img, bool para)
     {
         cv::Mat filter = (cv::Mat_<double>(3, 3) << 0.1111F, 0.1111F, 0.1111F,
                           0.1111F, 0.1111F, 0.1111F, 0.1111F, 0.1111F, 0.1111F);
-        cv::Mat* res = new cv::Mat(cv::Mat::zeros(img.size(), img.type()));
+        cv::Mat res = cv::Mat(cv::Mat::zeros(img.size(), img.type()));
 
         if (para) {
         tbb::blocked_range2d<unsigned, unsigned> range(1, img.rows - 1, 1, img.cols - 1);
@@ -24,7 +24,7 @@ namespace proc
                                                       img.at<cv::Vec3b>(i - 1 + a, j - 1 + b)[c];
                                               }
                                           }
-                                          res->at<cv::Vec3b>(i, j)[c] = value[c];
+                                          res.at<cv::Vec3b>(i, j)[c] = value[c];
                                       }
                                   }
                               }
@@ -41,7 +41,7 @@ namespace proc
                                                                                         j - 1 + b)[c];
                             }
                         }
-                        res->at<cv::Vec3b>(i, j)[c] = value[c];
+                        res.at<cv::Vec3b>(i, j)[c] = value[c];
                     }
                 }
             }

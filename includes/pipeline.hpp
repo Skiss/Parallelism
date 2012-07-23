@@ -9,21 +9,18 @@
 class Chunk
 {
 public:
-    static const unsigned chunkSize = 200;
+    static const unsigned chunkSize = 20;
 
-    Chunk(const std::vector<cv::Mat>& v);
+    Chunk(const std::vector<cv::Mat>& v,
+          const std::vector<cv::Mat>& v2);
     ~Chunk() = default;
 
-    // bool append(cv::Mat frame);
-
-    std::vector<cv::Mat>
-    getFrames()
-        {
-            return frames_;
-        }
+    std::vector<cv::Mat>*
+    getFrames() { return &frames_; }
 
 private:
     std::vector<cv::Mat> frames_;
+    std::vector<cv::Mat> frames2_;
 };
 
 class OutputVideo
@@ -35,20 +32,21 @@ public:
     void operator()(Chunk* chunk) const;
 
 private:
-    // mutable std::vector<cv::Mat> vid_;
     mutable cv::VideoWriter vid;
 };
 
 class InputVideo
 {
 public:
-    InputVideo(const std::vector<cv::Mat>& vid);
+    InputVideo(const std::vector<cv::Mat>& vid,
+               const std::vector<cv::Mat>& vid2);
     ~InputVideo() = default;
 
     Chunk* operator()(tbb::flow_control& fc) const;
 
 private:
     mutable std::vector<cv::Mat> vid_;
+    mutable std::vector<cv::Mat> vid2_;
     mutable unsigned offset;
 };
 
