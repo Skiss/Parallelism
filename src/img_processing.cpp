@@ -5,9 +5,10 @@ namespace proc
 {
     cv::Mat blur(const cv::Mat& img, bool para)
     {
-        cv::Mat filter = (cv::Mat_<double>(3, 3) << 0.1111F, 0.1111F, 0.1111F,
-                          0.1111F, 0.1111F, 0.1111F, 0.1111F, 0.1111F, 0.1111F);
-        cv::Mat res = cv::Mat(cv::Mat::zeros(img.size(), img.type()));
+        static cv::Mat filter = (cv::Mat_<double>(3, 3) << 0.1111F, 0.1111F,
+                                 0.1111F, 0.1111F, 0.1111F,
+                                 0.1111F, 0.1111F, 0.1111F, 0.1111F);
+        cv::Mat res = img;
 
         if (para) {
         tbb::blocked_range2d<unsigned, unsigned> range(1, img.rows - 1, 1, img.cols - 1);

@@ -70,7 +70,7 @@ int main(int argc, char** argv)
     tbb::tick_count  t0 = tbb::tick_count::now();
     runPipeline(nbThreads, v, v2, vid);
     tbb::tick_count  t1 = tbb::tick_count::now();
-    std::cout << (t1 - t0).seconds() << std::endl;
+    std::cout << (t1 - t0).seconds() << " seconds" << std::endl;
 
     return 0;
 }

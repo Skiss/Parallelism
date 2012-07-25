@@ -9,18 +9,20 @@
 class Chunk
 {
 public:
-    static const unsigned chunkSize = 20;
+    static const unsigned chunkSize = 200;
 
-    Chunk(const std::vector<cv::Mat>& v,
-          const std::vector<cv::Mat>& v2);
+    Chunk(cv::Mat* offset1, unsigned size, cv::Mat* offset2 = nullptr);
     ~Chunk() = default;
 
-    std::vector<cv::Mat>*
-    getFrames() { return &frames_; }
+    std::pair<cv::Mat*, unsigned>
+    getFrames() { return std::make_pair(offset1_, size_); }
+    std::pair<cv::Mat*, unsigned>
+    getFrames2() { return std::make_pair(offset2_, size_); }
 
 private:
-    std::vector<cv::Mat> frames_;
-    std::vector<cv::Mat> frames2_;
+    cv::Mat* offset1_;
+    cv::Mat* offset2_;
+    unsigned size_;
 };
 
 class OutputVideo

@@ -1,11 +1,12 @@
 #include "pipeline.hpp"
 #include "img_processing.hpp"
+#include "videoProcessing.hpp"
 
 
-Chunk::Chunk(const std::vector<cv::Mat>& v,
-             const std::vector<cv::Mat>& v2)
-    : frames_(v),
-      frames2_(v2)
+Chunk::Chunk(cv::Mat* offset1, unsigned size, cv::Mat* offset2)
+    : offset1_(offset1),
+      offset2_(offset2),
+      size_(size)
 {}
 
 OutputVideo::OutputVideo(cv::VideoCapture& vid)
@@ -20,8 +21,13 @@ OutputVideo::OutputVideo(cv::VideoCapture& vid)
 void
 OutputVideo::operator()(Chunk* c) const
 {
-    for (auto f : *c->getFrames())
-        vid << f;
+    auto v = c->getFrames().first;
+    unsigned size = c->getFrames().second;
+
+    for (unsigned i = 0; i < size; ++i)
+        vid << v[i];
+
+    delete c;
 }
 
 InputVideo::InputVideo(const std::vector<cv::Mat>& vid,
@@ -35,6 +41,7 @@ Chunk*
 InputVideo::operator()(tbb::flow_control& fc) const
 {
     unsigned size = 0;
+    cv::Mat* v2 = nullptr;
 
     if (vid_.end() - (vid_.begin() + offset) >= Chunk::chunkSize)
         size = Chunk::chunkSize;
@@ -43,15 +50,10 @@ InputVideo::operator()(tbb::flow_control& fc) const
         fc.stop();
     }
 
-    std::vector<cv::Mat> v(vid_.begin() + offset, vid_.begin() + offset + size);
-    std::vector<cv::Mat> v2;
-
     if (!vid2_.empty())
-        std::copy(vid2_.begin() + offset,
-                  vid2_.begin() + offset + size,
-                  std::back_inserter(v2));
+        v2 = vid2_.data() + offset;
 
-    Chunk* c = new Chunk(v, v2);
+    Chunk* c = new Chunk(vid_.data() + offset, size, v2);
 
     offset += size;
 
@@ -61,9 +63,18 @@ InputVideo::operator()(tbb::flow_control& fc) const
 Chunk*
 Transformer::operator()(Chunk* c) const
 {
-    // for (auto& f : *c->getFrames()) {
-    //     f = proc::blur(f);
-    // }
+    auto v = c->getFrames().first;
+    unsigned size = c->getFrames().second;
+    auto v2 = c->getFrames2().first;
+
+    if (v2) {
+        for (unsigned i = 0; i < size; ++i)
+            v[i] = proc::blur(v[i]);
+    }
+    else {
+        for (unsigned i = 0; i < size; ++i)
+            v[i] = proc::blur(v[i]);
+    }
 
     return c;
 }

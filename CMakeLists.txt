@@ -6,6 +6,7 @@ set(
   SOURCES
   src/main.cpp
   src/img_processing.cpp
+  src/videoProcessing.cpp
   src/pipeline.cpp
   )
 
