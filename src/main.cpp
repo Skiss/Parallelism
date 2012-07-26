@@ -11,6 +11,34 @@ typedef std::vector<std::function<cv::Mat(const cv::Mat&,
 
 using namespace cv;
 
+void display_help()
+{
+    std::cout << "Usage: ./prpa option arg1 arg2"<< std::endl
+              << std::endl
+              << "Options:" << std::endl
+              << "\t--help\t\t: display this help" << std::endl
+              << std::endl
+              << "Arguments:" << std::endl
+              << "\targ1\t\t: video input" << std::endl
+              << "\targ2\t\t: video output" << std::endl
+              << std::endl
+              << "Filters:" << std::endl
+              << "\t--blur\t\t: normal blur"<< std::endl
+              << "\t--blur-para\t: parallelized blur"<< std::endl
+              << "\t--sharpen\t: normal sharpen"<< std::endl
+              << "\t--sharpen-para\t: parallelized sharpen"<< std::endl
+              << "\t--edge\t\t: normal edge detection"<< std::endl
+              << "\t--edge-para\t: parallelized edge detection"<< std::endl
+              << "\t--light\t\t: normal light filter"<< std::endl
+              << "\t--light-para\t: parallelized light filter"<< std::endl
+              << "\t--dark\t\t: normal dark filter"<< std::endl
+              << "\t--dark-para\t: parallelized dark filter"<< std::endl
+              << "\t--invert\t: normal inversion of color"<< std::endl
+              << "\t--invert-para\t: parallelized inversion of color"<< std::endl
+              << "\t--mirror\t: normal mirror"<< std::endl
+              << "\t--mirror-para\t: parallelized mirror"<< std::endl;
+}
+
 void runPipeline(int nbThreads,
                  const std::vector<cv::Mat>& vid,
                  const std::vector<cv::Mat>& vid2,
@@ -33,12 +61,15 @@ void runPipeline(int nbThreads,
 
 int main(int argc, char** argv)
 {
-    if (argc < 4)
-    {
+    if ((argc == 2) && (strcmp(argv[1], "--help")) == 0) {
+        display_help();
+        return 0;
+    }
+
+    if (argc < 4) {
         std::cerr << "More arguments please." << std::endl;
         return -1;
-    } else if (argc > 4)
-    {
+    } else if (argc > 4) {
         std::cerr << "Too much arguments." << std::endl;
         return -1;
     }
@@ -75,32 +106,36 @@ int main(int argc, char** argv)
 
     if (strcmp(argv[1], "--blur") == 0)
         filter = BLUR;
-    if (strcmp(argv[1], "--sharpen") == 0)
+    else if (strcmp(argv[1], "--sharpen") == 0)
         filter = SHARPEN;
-    if (strcmp(argv[1], "--edge") == 0)
+    else if (strcmp(argv[1], "--edge") == 0)
         filter = EDGE;
-    if (strcmp(argv[1], "--light") == 0)
+    else if (strcmp(argv[1], "--light") == 0)
         filter = LIGHT;
-    if (strcmp(argv[1], "--dark") == 0)
+    else if (strcmp(argv[1], "--dark") == 0)
         filter = DARK;
-    if (strcmp(argv[1], "--invert") == 0)
+    else if (strcmp(argv[1], "--invert") == 0)
         filter = INVERT;
-    if (strcmp(argv[1], "--mirror") == 0)
+    else if (strcmp(argv[1], "--mirror") == 0)
         filter = MIRROR;
-    if (strcmp(argv[1], "--blur-para") == 0)
+    else if (strcmp(argv[1], "--blur-para") == 0)
         filter = BLUR_P;
-    if (strcmp(argv[1], "--sharpen-para") == 0)
+    else if (strcmp(argv[1], "--sharpen-para") == 0)
         filter = SHARPEN_P;
-    if (strcmp(argv[1], "--edge-para") == 0)
+    else if (strcmp(argv[1], "--edge-para") == 0)
         filter = EDGE_P;
-    if (strcmp(argv[1], "--light-para") == 0)
+    else if (strcmp(argv[1], "--light-para") == 0)
         filter = LIGHT_P;
-    if (strcmp(argv[1], "--dark-para") == 0)
+    else if (strcmp(argv[1], "--dark-para") == 0)
         filter = DARK_P;
-    if (strcmp(argv[1], "--invert-para") == 0)
+    else if (strcmp(argv[1], "--invert-para") == 0)
         filter = INVERT_P;
-    if (strcmp(argv[1], "--mirror-para") == 0)
+    else if (strcmp(argv[1], "--mirror-para") == 0)
         filter = MIRROR_P;
+    else {
+        std::cerr << "Unknown filter." << std::endl;
+        return -1;
+    }
     
     int nbThreads = tbb::task_scheduler_init::default_num_threads();
 
