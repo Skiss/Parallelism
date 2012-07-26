@@ -20,7 +20,7 @@ void display_help()
               << std::endl
               << "Arguments:" << std::endl
               << "\targ1\t\t: video input" << std::endl
-              << "\targ2\t\t: video output" << std::endl
+              << "\targ2\t\t: video output (AVI format)" << std::endl
               << std::endl
               << "Filters:" << std::endl
               << "\t--blur\t\t: normal blur"<< std::endl
