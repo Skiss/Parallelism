@@ -66,10 +66,10 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    if (argc < 4) {
+    if (argc < 5) {
         std::cerr << "More arguments please." << std::endl;
         return -1;
-    } else if (argc > 4) {
+    } else if (argc > 5) {
         std::cerr << "Too much arguments." << std::endl;
         return -1;
     }
@@ -85,9 +85,11 @@ int main(int argc, char** argv)
 
         v.push_back(frame.clone());
     }
+    std::cout << vid.get(CV_CAP_PROP_FRAME_WIDTH) << ", "
+              << vid.get(CV_CAP_PROP_FRAME_HEIGHT) << std::endl;
 
-    /*if (argc > 2) {
-        cv::VideoCapture vid2(argv[2]);
+    if (argc > 3) {
+        cv::VideoCapture vid2(argv[3]);
 
         while (1) {
             cv::Mat frame;
@@ -97,10 +99,12 @@ int main(int argc, char** argv)
 
             v2.push_back(frame.clone());
         }
+        std::cout << vid2.get(CV_CAP_PROP_FRAME_WIDTH) << ", "
+                  << vid2.get(CV_CAP_PROP_FRAME_HEIGHT) << std::endl;
     }
 
-    ImgProc imgProc = {proc::blur};
-    VideoProc videoProc = {};*/
+    // ImgProc imgProc = {proc::blur};
+    // VideoProc videoProc = {};
 
     int filter;
 
@@ -136,11 +140,11 @@ int main(int argc, char** argv)
         std::cerr << "Unknown filter." << std::endl;
         return -1;
     }
-    
+
     int nbThreads = tbb::task_scheduler_init::default_num_threads();
 
     tbb::tick_count  t0 = tbb::tick_count::now();
-    runPipeline(nbThreads, v, v2, vid, filter, argv[3]);
+    runPipeline(nbThreads, v, v2, vid, filter, argv[4]);
     tbb::tick_count  t1 = tbb::tick_count::now();
     std::cout << (t1 - t0).seconds() << " seconds" << std::endl;
 

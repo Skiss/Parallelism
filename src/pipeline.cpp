@@ -73,7 +73,7 @@ Transformer::operator()(Chunk* c) const
 
     if (v2) {
         for (unsigned i = 0; i < size; ++i)
-            v[i] = proc::blur(v[i]);
+            v[i] = video::blend(v[i], v2[i]);
     }
     else {
         if (filter_ == BLUR){

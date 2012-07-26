@@ -7,7 +7,9 @@
 namespace video
 {
     bool isSwapable(const cv::Mat& img);
-    cv::Mat swapContent(const cv::Mat& img1, const cv::Mat& img2);
+    cv::Mat swapContent(cv::Mat& img1, const cv::Mat& img2);
+
+    cv::Mat blend(const cv::Mat& img1, const cv::Mat& img2);
 }
 
 #endif /* _VIDEOPROCESSING_H_ */
