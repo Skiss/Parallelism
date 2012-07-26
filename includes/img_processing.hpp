@@ -14,6 +14,12 @@
 namespace proc
 {
     cv::Mat blur(const cv::Mat& img, bool para = false);
+    cv::Mat sharpen(const cv::Mat& img, bool para = false);
+    cv::Mat edge_detect(const cv::Mat& img, bool para = false);
+    cv::Mat light(const cv::Mat& img, bool para = false);
+    cv::Mat dark(const cv::Mat& img, bool para = false);
+    cv::Mat apply_filter_para(cv::Mat filter, const cv::Mat& img);
+    cv::Mat apply_filter(cv::Mat filter, const cv::Mat& img);
 };
 
 #endif /* _IMG_PROCESSING_H_ */
