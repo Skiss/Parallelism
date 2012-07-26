@@ -168,7 +168,9 @@ namespace proc
         } else {
             for (int i = 0; i < img.rows; ++i) {
                 for (int j = 0; j < img.cols; ++j) {
-                    res.at<cv::Vec3b>(i, j) = img.at<cv::Vec3b>(i, img.cols - j);
+                    for (int c = 0; c < 3; ++c) {
+                        res.at<cv::Vec3b>(i, j)[c] = img.at<cv::Vec3b>(i, img.cols - j)[c];
+                    }
                 }
             }
         }
