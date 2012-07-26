@@ -6,6 +6,21 @@
 #include <tbb/pipeline.h>
 #include <iostream>
 
+#define BLUR      0
+#define SHARPEN   1
+#define EDGE      2
+#define LIGHT     3
+#define DARK      4
+#define INVERT    5
+#define MIRROR    6
+#define BLUR_P    7
+#define SHARPEN_P 8
+#define EDGE_P    9
+#define LIGHT_P   10
+#define DARK_P    11
+#define INVERT_P  12
+#define MIRROR_P  13
+
 class Chunk
 {
 public:
@@ -28,7 +43,7 @@ private:
 class OutputVideo
 {
 public:
-    OutputVideo(cv::VideoCapture& vid);
+    OutputVideo(char* output, cv::VideoCapture& vid);
     ~OutputVideo() = default;
 
     void operator()(Chunk* chunk) const;
@@ -55,14 +70,13 @@ private:
 class Transformer
 {
 public:
-    Transformer() = default;
+    Transformer(int filter);
     ~Transformer() = default;
 
     Chunk* operator()(Chunk* chunk) const;
 
 private:
+    int filter_;
 };
-
-
 
 #endif /* _PIPELINE_H_ */

@@ -20,6 +20,8 @@ namespace proc
     cv::Mat dark(const cv::Mat& img, bool para = false);
     cv::Mat apply_filter_para(cv::Mat filter, const cv::Mat& img);
     cv::Mat apply_filter(cv::Mat filter, const cv::Mat& img);
+    cv::Mat invert(const cv::Mat& img, bool para = false);
+    cv::Mat mirror(const cv::Mat& img, bool para = false);
 };
 
 #endif /* _IMG_PROCESSING_H_ */
