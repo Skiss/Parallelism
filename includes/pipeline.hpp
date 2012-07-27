@@ -8,9 +8,8 @@
 
 
 typedef std::vector<std::function<void(cv::Mat&, bool)>> ImgProc;
-typedef std::vector<std::function<cv::Mat(const cv::Mat&,
-                                          const cv::Mat&,
-                                          bool)>> VideoProc;
+typedef std::vector<std::function<cv::Mat(cv::Mat&,
+                                          const cv::Mat&)>> VideoProc;
 
 class Chunk
 {
@@ -61,13 +60,14 @@ private:
 class Transformer
 {
 public:
-    Transformer(const ImgProc& imgProc);
+    Transformer(const ImgProc& imgProc, const VideoProc& videoProc);
     ~Transformer() = default;
 
     Chunk* operator()(Chunk* chunk) const;
 
 private:
     ImgProc imgProc_;
+    VideoProc videoProc_;
 };
 
 #endif /* _PIPELINE_H_ */

@@ -1,5 +1,7 @@
 #include "pipeline.hpp"
 #include "img_processing.hpp"
+#include "videoProcessing.hpp"
+
 #include <iostream>
 #include <functional>
 
@@ -27,12 +29,27 @@ getImgProc(char* s)
     return nullptr;
 }
 
+std::function<cv::Mat(cv::Mat&, const cv::Mat&)>
+getVideoProc(char* s)
+{
+    if (strcmp(s, "-swap") == 0)
+        return video::swapContent;
+    else if (strcmp(s, "-blend") == 0)
+        return video::blend;
+
+    return nullptr;
+}
+
 void parseArgs(int argc, char** argv,
-               ImgProc& imgProc, std::vector<std::string>& videos)
+               ImgProc& imgProc,
+               VideoProc& vidProc,
+               std::vector<std::string>& videos)
 {
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-' && argv[i][1] == '-')
             imgProc.push_back(getImgProc(argv[i]));
+        else if (argv[i][0] == '-' && argv[i][1] != '-')
+            vidProc.push_back(getVideoProc(argv[i]));
         else
             videos.push_back(argv[i]);
     }
@@ -71,6 +88,7 @@ void runPipeline(int nbThreads,
                  const std::vector<cv::Mat>& vid2,
                  cv::VideoCapture& video,
                  const ImgProc& imgProc,
+                 const VideoProc& videoProc,
                  const std::string& output)
 {
     tbb::parallel_pipeline(
@@ -78,8 +96,8 @@ void runPipeline(int nbThreads,
         tbb::make_filter<void, Chunk*>(tbb::filter::serial_in_order,
                                        InputVideo(vid, vid2))
         &
-        tbb::make_filter<Chunk*, Chunk*>(tbb::filter::serial_in_order,
-                                       Transformer(imgProc))
+        tbb::make_filter<Chunk*, Chunk*>(tbb::filter::parallel,
+                                         Transformer(imgProc, videoProc))
         &
         tbb::make_filter<Chunk*, void>(tbb::filter::serial_in_order,
                                        OutputVideo(output, video))
@@ -101,8 +119,9 @@ int main(int argc, char** argv)
     std::vector<std::string> videos;
     std::vector<cv::Mat> v, v2;
     ImgProc imgProc;
+    VideoProc videoProc;
 
-    parseArgs(argc, argv, imgProc, videos);
+    parseArgs(argc, argv, imgProc, videoProc, videos);
 
     if (videos.size() < 2) {
         std::cerr << "Not enough arguments." << std::endl;
@@ -134,7 +153,7 @@ int main(int argc, char** argv)
     int nbThreads = tbb::task_scheduler_init::default_num_threads();
 
     tbb::tick_count  t0 = tbb::tick_count::now();
-    runPipeline(nbThreads, v, v2, vid, imgProc, videos.back());
+    runPipeline(nbThreads, v, v2, vid, imgProc, videoProc, videos.back());
     tbb::tick_count  t1 = tbb::tick_count::now();
     std::cout << (t1 - t0).seconds() << " seconds" << std::endl;
 
