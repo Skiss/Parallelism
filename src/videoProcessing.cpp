@@ -5,7 +5,7 @@ namespace video
 {
     bool isSwapable(const cv::Vec3b& pix)
     {
-        return (pix[1] >= 160 && pix[0] < 50 && pix[2] < 90);
+        return (pix[1] >= 160 && pix[0] < 50 && pix[2] < 110);
     }
 
     cv::Mat swapContent(cv::Mat& img1, const cv::Mat& img2)

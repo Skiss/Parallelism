@@ -3,7 +3,7 @@
 
 namespace proc
 {
-    cv::Mat blur(const cv::Mat& img, bool para)
+    void blur(cv::Mat& img, bool para)
     {
         static cv::Mat filter = (cv::Mat_<double>(3, 3) <<
                                 0.1111F, 0.1111F, 0.1111F,
@@ -11,68 +11,67 @@ namespace proc
                                 0.1111F, 0.1111F, 0.1111F);
 
         if (para) {
-            return apply_filter_para(filter, img);
+            apply_filter_para(filter, img);
         } else {
-            return apply_filter(filter, img);
+            apply_filter(filter, img);
         }
     }
 
-    cv::Mat sharpen(const cv::Mat& img, bool para)
+    void sharpen(cv::Mat& img, bool para)
     {
         static cv::Mat filter = (cv::Mat_<double>(3, 3) <<
                                 -1.0F, -1.0F, -1.0F,
                                 -1.0F, 9.0F, -1.0F,
                                 -1.0F, -1.0F, -1.0F);
         if (para) {
-            return apply_filter_para(filter, img);
+            apply_filter_para(filter, img);
         } else {
-            return apply_filter(filter, img);
+            apply_filter(filter, img);
         }
     }
 
-    cv::Mat edge_detect(const cv::Mat& img, bool para)
+    void edge_detect(cv::Mat& img, bool para)
     {
         static cv::Mat filter = (cv::Mat_<double>(3, 3) <<
                                 -0.5F, -0.5F, -0.5F,
                                 -0.5F, 4.0F, -0.5F,
                                 -0.5F, -0.5F, -0.5F);
         if (para) {
-            return apply_filter_para(filter, img);
+            apply_filter_para(filter, img);
         } else {
-            return apply_filter(filter, img);
+            apply_filter(filter, img);
         }
     }
 
-    cv::Mat light(const cv::Mat& img, bool para)
+    void light(cv::Mat& img, bool para)
     {
         static cv::Mat filter = (cv::Mat_<double>(3, 3) <<
                                 0.1F, 0.1F, 0.1F,
                                 0.1F, 1.0F, 0.1F,
                                 0.1F, 0.1F, 0.1F);
         if (para) {
-            return apply_filter_para(filter, img);
+            apply_filter_para(filter, img);
         } else {
-            return apply_filter(filter, img);
+            apply_filter(filter, img);
         }
     }
 
-    cv::Mat dark(const cv::Mat& img, bool para)
+    void dark(cv::Mat& img, bool para)
     {
         static cv::Mat filter = (cv::Mat_<double>(3, 3) <<
                                 0.01F, 0.01F, 0.01F,
                                 0.01F, 0.5F, 0.01F,
                                 0.01F, 0.01F, 0.01F);
         if (para) {
-            return apply_filter_para(filter, img);
+            apply_filter_para(filter, img);
         } else {
-            return apply_filter(filter, img);
+            apply_filter(filter, img);
         }
     }
 
-    cv::Mat apply_filter_para(cv::Mat filter, const cv::Mat& img)
+    void apply_filter_para(const cv::Mat& filter, cv::Mat& img)
     {
-        cv::Mat res;
-        res = cv::Mat::zeros(img.rows, img.cols, img.type());
+        cv::Mat res = cv::Mat::zeros(img.rows, img.cols, img.type());
 
         tbb::blocked_range2d<unsigned, unsigned> range(1, img.rows - 1, 1, img.cols - 1);
         tbb::parallel_for(range,
@@ -94,13 +93,12 @@ namespace proc
                                   }
                               }
                           });
-        return res;
+        res.copyTo(img);
     }
 
-    cv::Mat apply_filter(cv::Mat filter, const cv::Mat& img)
+    void apply_filter(const cv::Mat& filter, cv::Mat& img)
     {
-        cv::Mat res;
-        res = cv::Mat::zeros(img.rows, img.cols, img.type());
+        cv::Mat res = cv::Mat::zeros(img.rows, img.cols, img.type());
 
         for (int i = 1; i < img.rows - 1; ++i) {
             for (int j = 1; j < img.cols - 1; ++j) {
@@ -117,11 +115,10 @@ namespace proc
                 }
             }
         }
-
-        return res;
+        res.copyTo(img);
     }
-    
-    cv::Mat invert(const cv::Mat& img, bool para)
+
+    void invert(cv::Mat& img, bool para)
     {
         cv::Mat res = img;
 
@@ -146,11 +143,10 @@ namespace proc
                 }
             }
         }
-
-        return res;
+        res.copyTo(img);
     }
 
-    cv::Mat mirror(const cv::Mat& img, bool para)
+    void mirror(cv::Mat& img, bool para)
     {
         cv::Mat res = img;
 
@@ -174,7 +170,6 @@ namespace proc
                 }
             }
         }
-
-        return res;
+        res.copyTo(img);
     }
 };

@@ -4,12 +4,39 @@
 #include <functional>
 
 
-typedef std::vector<std::function<cv::Mat(const cv::Mat&, bool)>> ImgProc;
-typedef std::vector<std::function<cv::Mat(const cv::Mat&,
-                                          const cv::Mat&,
-                                          bool)>> VideoProc;
-
 using namespace cv;
+
+std::function<void(cv::Mat&, bool)>
+getImgProc(char* s)
+{
+    if (strcmp(s, "--blur") == 0)
+        return proc::blur;
+    else if (strcmp(s, "--sharpen") == 0)
+        return proc::sharpen;
+    else if (strcmp(s, "--edge") == 0)
+        return proc::edge_detect;
+    else if (strcmp(s, "--light") == 0)
+        return proc::light;
+    else if (strcmp(s, "--dark") == 0)
+        return proc::dark;
+    else if (strcmp(s, "--invert") == 0)
+        return proc::invert;
+    else if (strcmp(s, "--mirror") == 0)
+        return proc::mirror;
+
+    return nullptr;
+}
+
+void parseArgs(int argc, char** argv,
+               ImgProc& imgProc, std::vector<std::string>& videos)
+{
+    for (int i = 1; i < argc; ++i) {
+        if (argv[i][0] == '-' && argv[i][1] == '-')
+            imgProc.push_back(getImgProc(argv[i]));
+        else
+            videos.push_back(argv[i]);
+    }
+}
 
 void display_help()
 {
@@ -43,16 +70,16 @@ void runPipeline(int nbThreads,
                  const std::vector<cv::Mat>& vid,
                  const std::vector<cv::Mat>& vid2,
                  cv::VideoCapture& video,
-                 int filter,
-                 char* output)
+                 const ImgProc& imgProc,
+                 const std::string& output)
 {
     tbb::parallel_pipeline(
         nbThreads,
         tbb::make_filter<void, Chunk*>(tbb::filter::serial_in_order,
                                        InputVideo(vid, vid2))
         &
-        tbb::make_filter<Chunk*, Chunk*>(tbb::filter::parallel,
-                                       Transformer(filter))
+        tbb::make_filter<Chunk*, Chunk*>(tbb::filter::serial_in_order,
+                                       Transformer(imgProc))
         &
         tbb::make_filter<Chunk*, void>(tbb::filter::serial_in_order,
                                        OutputVideo(output, video))
@@ -66,17 +93,23 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    if (argc < 5) {
+    if (argc < 4) {
         std::cerr << "More arguments please." << std::endl;
-        return -1;
-    } else if (argc > 5) {
-        std::cerr << "Too much arguments." << std::endl;
         return -1;
     }
 
-    cv::VideoCapture vid(argv[2]);
+    std::vector<std::string> videos;
     std::vector<cv::Mat> v, v2;
+    ImgProc imgProc;
 
+    parseArgs(argc, argv, imgProc, videos);
+
+    if (videos.size() < 2) {
+        std::cerr << "Not enough arguments." << std::endl;
+        return -1;
+    }
+
+    cv::VideoCapture vid(videos.at(0));
     while (1) {
         cv::Mat frame;
 
@@ -85,12 +118,9 @@ int main(int argc, char** argv)
 
         v.push_back(frame.clone());
     }
-    std::cout << vid.get(CV_CAP_PROP_FRAME_WIDTH) << ", "
-              << vid.get(CV_CAP_PROP_FRAME_HEIGHT) << std::endl;
 
-    if (argc > 3) {
-        cv::VideoCapture vid2(argv[3]);
-
+    if (videos.size() == 3) {
+        cv::VideoCapture vid2(videos.at(1));
         while (1) {
             cv::Mat frame;
 
@@ -99,52 +129,12 @@ int main(int argc, char** argv)
 
             v2.push_back(frame.clone());
         }
-        std::cout << vid2.get(CV_CAP_PROP_FRAME_WIDTH) << ", "
-                  << vid2.get(CV_CAP_PROP_FRAME_HEIGHT) << std::endl;
-    }
-
-    // ImgProc imgProc = {proc::blur};
-    // VideoProc videoProc = {};
-
-    int filter;
-
-    if (strcmp(argv[1], "--blur") == 0)
-        filter = BLUR;
-    else if (strcmp(argv[1], "--sharpen") == 0)
-        filter = SHARPEN;
-    else if (strcmp(argv[1], "--edge") == 0)
-        filter = EDGE;
-    else if (strcmp(argv[1], "--light") == 0)
-        filter = LIGHT;
-    else if (strcmp(argv[1], "--dark") == 0)
-        filter = DARK;
-    else if (strcmp(argv[1], "--invert") == 0)
-        filter = INVERT;
-    else if (strcmp(argv[1], "--mirror") == 0)
-        filter = MIRROR;
-    else if (strcmp(argv[1], "--blur-para") == 0)
-        filter = BLUR_P;
-    else if (strcmp(argv[1], "--sharpen-para") == 0)
-        filter = SHARPEN_P;
-    else if (strcmp(argv[1], "--edge-para") == 0)
-        filter = EDGE_P;
-    else if (strcmp(argv[1], "--light-para") == 0)
-        filter = LIGHT_P;
-    else if (strcmp(argv[1], "--dark-para") == 0)
-        filter = DARK_P;
-    else if (strcmp(argv[1], "--invert-para") == 0)
-        filter = INVERT_P;
-    else if (strcmp(argv[1], "--mirror-para") == 0)
-        filter = MIRROR_P;
-    else {
-        std::cerr << "Unknown filter." << std::endl;
-        return -1;
     }
 
     int nbThreads = tbb::task_scheduler_init::default_num_threads();
 
     tbb::tick_count  t0 = tbb::tick_count::now();
-    runPipeline(nbThreads, v, v2, vid, filter, argv[4]);
+    runPipeline(nbThreads, v, v2, vid, imgProc, videos.back());
     tbb::tick_count  t1 = tbb::tick_count::now();
     std::cout << (t1 - t0).seconds() << " seconds" << std::endl;
 

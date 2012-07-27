@@ -9,7 +9,7 @@ Chunk::Chunk(cv::Mat* offset1, unsigned size, cv::Mat* offset2)
       size_(size)
 {}
 
-OutputVideo::OutputVideo(char* output, cv::VideoCapture& vid)
+OutputVideo::OutputVideo(const std::string& output, cv::VideoCapture& vid)
     : vid(output,
           vid.get(CV_CAP_PROP_FOURCC),
           vid.get(CV_CAP_PROP_FPS),
@@ -60,8 +60,8 @@ InputVideo::operator()(tbb::flow_control& fc) const
     return c;
 }
 
-Transformer::Transformer(int filter)
-    : filter_(filter)
+Transformer::Transformer(const ImgProc& imgProc)
+    : imgProc_(imgProc)
 {}
 
 Chunk*
@@ -76,48 +76,9 @@ Transformer::operator()(Chunk* c) const
             v[i] = video::blend(v[i], v2[i]);
     }
     else {
-        if (filter_ == BLUR){
+        for (auto f : imgProc_) {
             for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::blur(v[i]);
-        } else if (filter_ == BLUR_P){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::blur(v[i], true);
-        } else if (filter_ == SHARPEN){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::sharpen(v[i]);
-        } else if (filter_ == SHARPEN_P){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::sharpen(v[i], true);
-        } else if (filter_ == EDGE){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::edge_detect(v[i]);
-        } else if (filter_ == EDGE_P){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::edge_detect(v[i], true);
-        } else if (filter_ == LIGHT){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::light(v[i]);
-        } else if (filter_ == LIGHT_P){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::light(v[i], true);
-        } else if (filter_ == DARK){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::dark(v[i]);
-        } else if (filter_ == DARK_P){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::dark(v[i], true);
-        } else if (filter_ == INVERT){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::invert(v[i]);
-        } else if (filter_ == INVERT_P){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::invert(v[i], true);
-        } else if (filter_ == MIRROR){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::mirror(v[i]);
-        } else if (filter_ == MIRROR_P){
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = proc::mirror(v[i], true);
+                f(v[i], false);
         }
     }
 
