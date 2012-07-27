@@ -60,8 +60,9 @@ InputVideo::operator()(tbb::flow_control& fc) const
     return c;
 }
 
-Transformer::Transformer(const ImgProc& imgProc)
-    : imgProc_(imgProc)
+Transformer::Transformer(const ImgProc& imgProc, const VideoProc& videoProc)
+    : imgProc_(imgProc),
+      videoProc_(videoProc)
 {}
 
 Chunk*
@@ -72,13 +73,15 @@ Transformer::operator()(Chunk* c) const
     auto v2 = c->getFrames2().first;
 
     if (v2) {
-        for (unsigned i = 0; i < size; ++i)
-            v[i] = video::blend(v[i], v2[i]);
+        for (auto f : videoProc_) {
+            for (unsigned i = 0; i < size; ++i)
+                v[i] = f(v[i], v2[i]);
+        }
     }
     else {
         for (auto f : imgProc_) {
             for (unsigned i = 0; i < size; ++i)
-                f(v[i], false);
+                f(v[i], true);
         }
     }
 

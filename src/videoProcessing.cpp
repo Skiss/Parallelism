@@ -1,6 +1,5 @@
 #include "videoProcessing.hpp"
 
-
 namespace video
 {
     bool isSwapable(const cv::Vec3b& pix)
