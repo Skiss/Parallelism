@@ -9,7 +9,8 @@
 
 typedef std::vector<std::function<void(cv::Mat&, bool)>> ImgProc;
 typedef std::vector<std::function<cv::Mat(cv::Mat&,
-                                          const cv::Mat&)>> VideoProc;
+                                          const cv::Mat&,
+                                          bool)>> VideoProc;
 
 class Chunk
 {

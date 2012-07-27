@@ -75,13 +75,13 @@ Transformer::operator()(Chunk* c) const
     if (v2) {
         for (auto f : videoProc_) {
             for (unsigned i = 0; i < size; ++i)
-                v[i] = f(v[i], v2[i]);
+                v[i] = f(v[i], v2[i], false);
         }
     }
     else {
         for (auto f : imgProc_) {
             for (unsigned i = 0; i < size; ++i)
-                f(v[i], true);
+                f(v[i], false);
         }
     }
 

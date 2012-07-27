@@ -29,7 +29,7 @@ getImgProc(char* s)
     return nullptr;
 }
 
-std::function<cv::Mat(cv::Mat&, const cv::Mat&)>
+std::function<cv::Mat(cv::Mat&, const cv::Mat&, bool)>
 getVideoProc(char* s)
 {
     if (strcmp(s, "-swap") == 0)
