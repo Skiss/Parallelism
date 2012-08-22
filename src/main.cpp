@@ -6,40 +6,38 @@
 #include <functional>
 
 
-using namespace cv;
-
+/// Get the right image processing function
 std::function<void(cv::Mat&, bool)>
-getImgProc(char* s)
+getImgProc(const std::string& s)
 {
-    if (strcmp(s, "--blur") == 0)
-        return proc::blur;
-    else if (strcmp(s, "--sharpen") == 0)
-        return proc::sharpen;
-    else if (strcmp(s, "--edge") == 0)
-        return proc::edge_detect;
-    else if (strcmp(s, "--light") == 0)
-        return proc::light;
-    else if (strcmp(s, "--dark") == 0)
-        return proc::dark;
-    else if (strcmp(s, "--invert") == 0)
-        return proc::invert;
-    else if (strcmp(s, "--mirror") == 0)
-        return proc::mirror;
+    if (s == "--blur")
+        return img::blur;
+    else if (s == "--sharpen")
+        return img::sharpen;
+    else if (s == "--edge")
+        return img::edge_detect;
+    else if (s == "--light")
+        return img::light;
+    else if (s == "--dark")
+        return img::dark;
 
     return nullptr;
 }
 
-std::function<cv::Mat(cv::Mat&, const cv::Mat&, bool)>
-getVideoProc(char* s)
+/// Get the right video processing function
+std::function<void(cv::Mat&, const cv::Mat&, bool)>
+getVideoProc(const std::string& s)
 {
-    if (strcmp(s, "-swap") == 0)
+    if (s == "-swap")
         return video::swapContent;
-    else if (strcmp(s, "-blend") == 0)
+    else if (s == "-blend")
         return video::blend;
 
     return nullptr;
 }
 
+/// Parses the arguments in order to get the videos
+/// and the process to apply on them
 void parseArgs(int argc, char** argv,
                ImgProc& imgProc,
                VideoProc& vidProc,
@@ -57,56 +55,48 @@ void parseArgs(int argc, char** argv,
 
 void display_help()
 {
-    std::cout << "Usage: ./prpa option arg1 arg2"<< std::endl
+    std::cout << "Usage: ./prpa options input output"<< std::endl
               << std::endl
               << "Options:" << std::endl
               << "\t--help\t\t: display this help" << std::endl
               << std::endl
               << "Arguments:" << std::endl
-              << "\targ1\t\t: video input" << std::endl
-              << "\targ2\t\t: video output (AVI format)" << std::endl
+              << "\tinput\t\t: video input" << std::endl
+              << "\toutput\t\t: video output" << std::endl
               << std::endl
               << "Filters:" << std::endl
-              << "\t--blur\t\t: normal blur"<< std::endl
-              << "\t--blur-para\t: parallelized blur"<< std::endl
-              << "\t--sharpen\t: normal sharpen"<< std::endl
-              << "\t--sharpen-para\t: parallelized sharpen"<< std::endl
-              << "\t--edge\t\t: normal edge detection"<< std::endl
-              << "\t--edge-para\t: parallelized edge detection"<< std::endl
-              << "\t--light\t\t: normal light filter"<< std::endl
-              << "\t--light-para\t: parallelized light filter"<< std::endl
-              << "\t--dark\t\t: normal dark filter"<< std::endl
-              << "\t--dark-para\t: parallelized dark filter"<< std::endl
-              << "\t--invert\t: normal inversion of color"<< std::endl
-              << "\t--invert-para\t: parallelized inversion of color"<< std::endl
-              << "\t--mirror\t: normal mirror"<< std::endl
-              << "\t--mirror-para\t: parallelized mirror"<< std::endl;
+              << "\t--blur\t\t: blur"<< std::endl
+              << "\t--sharpen\t: sharpen"<< std::endl
+              << "\t--edge\t\t: edge detection"<< std::endl
+              << "\t--light\t\t: light filter"<< std::endl
+              << "\t--dark\t\t: dark filter"<< std::endl;
 }
 
+
 void runPipeline(int nbThreads,
-                 const std::vector<cv::Mat>& vid,
-                 const std::vector<cv::Mat>& vid2,
-                 cv::VideoCapture& video,
+                 std::vector<std::string>& videos,
                  const ImgProc& imgProc,
-                 const VideoProc& videoProc,
-                 const std::string& output)
+                 const VideoProc& videoProc)
 {
+    std::string output = videos.back();
+    videos.pop_back();
+
     tbb::parallel_pipeline(
         nbThreads,
         tbb::make_filter<void, Chunk*>(tbb::filter::serial_in_order,
-                                       InputVideo(vid, vid2))
+                                       InputVideo(videos))
         &
         tbb::make_filter<Chunk*, Chunk*>(tbb::filter::parallel,
                                          Transformer(imgProc, videoProc))
         &
         tbb::make_filter<Chunk*, void>(tbb::filter::serial_in_order,
-                                       OutputVideo(output, video))
+                                       OutputVideo(output, cv::VideoCapture(videos.front())))
         );
 }
 
 int main(int argc, char** argv)
 {
-    if ((argc == 2) && (strcmp(argv[1], "--help")) == 0) {
+    if (std::string(argv[1]) == "--help") {
         display_help();
         return 0;
     }
@@ -117,43 +107,20 @@ int main(int argc, char** argv)
     }
 
     std::vector<std::string> videos;
-    std::vector<cv::Mat> v, v2;
     ImgProc imgProc;
     VideoProc videoProc;
 
     parseArgs(argc, argv, imgProc, videoProc, videos);
 
     if (videos.size() < 2) {
-        std::cerr << "Not enough arguments." << std::endl;
+        display_help();
         return -1;
-    }
-
-    cv::VideoCapture vid(videos.at(0));
-    while (1) {
-        cv::Mat frame;
-
-        if (!vid.read(frame))
-            break;
-
-        v.push_back(frame.clone());
-    }
-
-    if (videos.size() == 3) {
-        cv::VideoCapture vid2(videos.at(1));
-        while (1) {
-            cv::Mat frame;
-
-            if (!vid2.read(frame))
-                break;
-
-            v2.push_back(frame.clone());
-        }
     }
 
     int nbThreads = tbb::task_scheduler_init::default_num_threads();
 
     tbb::tick_count  t0 = tbb::tick_count::now();
-    runPipeline(nbThreads, v, v2, vid, imgProc, videoProc, videos.back());
+    runPipeline(nbThreads, videos, imgProc, videoProc);
     tbb::tick_count  t1 = tbb::tick_count::now();
     std::cout << (t1 - t0).seconds() << " seconds" << std::endl;
 

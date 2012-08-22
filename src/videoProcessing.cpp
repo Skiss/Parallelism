@@ -7,7 +7,7 @@ namespace video
         return (pix[1] >= 160 && pix[0] < 50 && pix[2] < 110);
     }
 
-    cv::Mat swapContent(cv::Mat& img1, const cv::Mat& img2, bool para)
+    void swapContent(cv::Mat& img1, const cv::Mat& img2, bool para)
     {
         if (para) {
             tbb::blocked_range2d<unsigned, unsigned> range(0, img1.rows, 0, img1.cols);
@@ -29,11 +29,9 @@ namespace video
                 }
             }
         }
-
-        return img1;
     }
 
-    cv::Mat blend(cv::Mat& img1, const cv::Mat& img2, bool para)
+    void blend(cv::Mat& img1, const cv::Mat& img2, bool para)
     {
         if (para) {
             tbb::blocked_range2d<unsigned, unsigned> range(0, img1.rows, 0, img1.cols);
@@ -55,7 +53,5 @@ namespace video
                 }
             }
         }
-
-        return img1;
     }
 }

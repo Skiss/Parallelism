@@ -11,17 +11,18 @@
 #include <tbb/tick_count.h>
 
 
-namespace proc
+namespace img
 {
-    void blur(cv::Mat& img, bool para = false);
-    void sharpen(cv::Mat& img, bool para = false);
-    void edge_detect(cv::Mat& img, bool para = false);
-    void light(cv::Mat& img, bool para = false);
-    void dark(cv::Mat& img, bool para = false);
+    /// Here, the para arguments indicates whether we want
+    /// the process to be done in parallel or not.
+
+    void blur(cv::Mat& img, bool para);
+    void sharpen(cv::Mat& img, bool para);
+    void edge_detect(cv::Mat& img, bool para);
+    void light(cv::Mat& img, bool para);
+    void dark(cv::Mat& img, bool para);
     void apply_filter_para(const cv::Mat& filter, cv::Mat& img);
     void apply_filter(const cv::Mat& filter, cv::Mat& img);
-    void invert(cv::Mat& img, bool para = false);
-    void mirror(cv::Mat& img, bool para = false);
 };
 
 #endif /* _IMG_PROCESSING_H_ */

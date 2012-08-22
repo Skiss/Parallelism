@@ -3,59 +3,66 @@
 #include "videoProcessing.hpp"
 
 
-Chunk::Chunk(cv::Mat* offset1, unsigned size, cv::Mat* offset2)
-    : offset1_(offset1),
-      offset2_(offset2),
-      size_(size)
-{}
-
-OutputVideo::OutputVideo(const std::string& output, cv::VideoCapture& vid)
-    : vid(output,
-          vid.get(CV_CAP_PROP_FOURCC),
-          vid.get(CV_CAP_PROP_FPS),
-          cv::Size(vid.get(CV_CAP_PROP_FRAME_WIDTH),
-                   vid.get(CV_CAP_PROP_FRAME_HEIGHT)),
-          true)
+OutputVideo::OutputVideo(const std::string& output, cv::VideoCapture&& vid)
+    : vid_(output,
+           vid.get(CV_CAP_PROP_FOURCC),
+           vid.get(CV_CAP_PROP_FPS),
+           cv::Size(vid.get(CV_CAP_PROP_FRAME_WIDTH),
+                    vid.get(CV_CAP_PROP_FRAME_HEIGHT)),
+           true)
 {}
 
 void
 OutputVideo::operator()(Chunk* c) const
 {
-    auto v = c->getFrames().first;
-    unsigned size = c->getFrames().second;
-
-    for (unsigned i = 0; i < size; ++i)
-        vid << v[i];
+    // We add the frames of the chunk to the final video
+    for (auto f : c->getFrames())
+        vid_ << f;
 
     delete c;
 }
 
-InputVideo::InputVideo(const std::vector<cv::Mat>& vid,
-                       const std::vector<cv::Mat>& vid2)
-    : vid_(vid),
-      vid2_(vid2),
-      offset(0)
-{}
+InputVideo::InputVideo(const std::vector<std::string>& videos)
+{
+    for (auto name : videos)
+        videos_.push_back(cv::VideoCapture(name));
+}
 
 Chunk*
 InputVideo::operator()(tbb::flow_control& fc) const
 {
-    unsigned size = 0;
-    cv::Mat* v2 = nullptr;
+    std::vector<cv::Mat> frames[2];
 
-    if (vid_.end() - (vid_.begin() + offset) >= Chunk::chunkSize)
-        size = Chunk::chunkSize;
-    else {
-        size = vid_.end() - (vid_.begin() + offset);
-        fc.stop();
+    unsigned count = 0;
+
+    // We get the frames from the video
+    while (count++ < Chunk::chunkSize) {
+        cv::Mat frame;
+
+        if (!videos_.at(0).read(frame)) {
+            fc.stop(); // No more frames to read, we stop
+            break;
+        }
+
+        frames[0].push_back(frame.clone());
     }
 
-    if (!vid2_.empty())
-        v2 = vid2_.data() + offset;
+    // If there is a second video, we do the same thing
+    if (videos_.size() == 2) {
+        unsigned i = 0;
 
-    Chunk* c = new Chunk(vid_.data() + offset, size, v2);
+        while (++i < count) {
+            cv::Mat frame;
 
-    offset += size;
+            if (!videos_.at(1).read(frame))
+                break;
+
+            frames[1].push_back(frame.clone());
+        }
+    }
+
+    // We create a chunk containing the frames
+    Chunk* c = new Chunk(frames[0], frames[1]);
 
     return c;
 }
@@ -68,20 +75,19 @@ Transformer::Transformer(const ImgProc& imgProc, const VideoProc& videoProc)
 Chunk*
 Transformer::operator()(Chunk* c) const
 {
-    auto v = c->getFrames().first;
-    unsigned size = c->getFrames().second;
-    auto v2 = c->getFrames2().first;
+    auto frames = c->getFrames();
+    auto frames2 = c->getFrames2();
 
-    if (v2) {
-        for (auto f : videoProc_) {
-            for (unsigned i = 0; i < size; ++i)
-                v[i] = f(v[i], v2[i], false);
-        }
+    // If there is only one video, we apply the image processing functions
+    if (frames2.empty()) {
+        for (auto f : imgProc_)
+            for (auto frame : frames)
+                f(frame, false);
     }
-    else {
-        for (auto f : imgProc_) {
-            for (unsigned i = 0; i < size; ++i)
-                f(v[i], false);
+    else { // Else, we apply the video processing functions
+        for (auto f : videoProc_) {
+            for (unsigned i = 0; i < frames.size(); ++i)
+                f(frames.at(i), frames2.at(i), false);
         }
     }
 

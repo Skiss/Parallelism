@@ -12,9 +12,12 @@
 namespace video
 {
     bool isSwapable(const cv::Mat& img);
-    cv::Mat swapContent(cv::Mat& img1, const cv::Mat& img2, bool para);
 
-    cv::Mat blend(cv::Mat& img1, const cv::Mat& img2, bool para);
+    /// Here, the para arguments indicates whether we want
+    /// the process to be done in parallel or not.
+
+    void swapContent(cv::Mat& img1, const cv::Mat& img2, bool para);
+    void blend(cv::Mat& img1, const cv::Mat& img2, bool para);
 }
 
 #endif /* _VIDEOPROCESSING_H_ */

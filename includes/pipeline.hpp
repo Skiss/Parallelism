@@ -2,62 +2,63 @@
 #define _PIPELINE_H_
 
 #include <highgui.h>
-#include <vector>
 #include <tbb/pipeline.h>
+
+#include <vector>
 #include <iostream>
 
 
+/// Vector for image processing functions
 typedef std::vector<std::function<void(cv::Mat&, bool)>> ImgProc;
-typedef std::vector<std::function<cv::Mat(cv::Mat&,
-                                          const cv::Mat&,
-                                          bool)>> VideoProc;
+/// Vector for video processing functions
+typedef std::vector<std::function<void(cv::Mat&, const cv::Mat&, bool)>> VideoProc;
 
+/// A chunk contains a part of a video (e.g. a certain number of frames)
 class Chunk
 {
 public:
     static const unsigned chunkSize = 200;
 
-    Chunk(cv::Mat* offset1, unsigned size, cv::Mat* offset2 = nullptr);
+    Chunk(const std::vector<cv::Mat>& v,
+          const std::vector<cv::Mat>& v2) : frames_(v), frames2_(v2) {}
     ~Chunk() = default;
 
-    std::pair<cv::Mat*, unsigned>
-    getFrames() { return std::make_pair(offset1_, size_); }
-    std::pair<cv::Mat*, unsigned>
-    getFrames2() { return std::make_pair(offset2_, size_); }
+    std::vector<cv::Mat> getFrames() { return frames_; }
+    std::vector<cv::Mat> getFrames2() { return frames2_; }
 
 private:
-    cv::Mat* offset1_;
-    cv::Mat* offset2_;
-    unsigned size_;
+    std::vector<cv::Mat> frames_, frames2_;
 };
 
+/// The final video, resulting from the input video on which frames
+/// we applied some processing (blur, blend, ...)
 class OutputVideo
 {
 public:
-    OutputVideo(const std::string& output, cv::VideoCapture& vid);
+    OutputVideo(const std::string& output, cv::VideoCapture&& vid);
     ~OutputVideo() = default;
 
     void operator()(Chunk* chunk) const;
 
 private:
-    mutable cv::VideoWriter vid;
+    mutable cv::VideoWriter vid_;
 };
 
+/// The input video on which we need to work on
 class InputVideo
 {
 public:
-    InputVideo(const std::vector<cv::Mat>& vid,
-               const std::vector<cv::Mat>& vid2);
+    InputVideo(const std::vector<std::string>& videos);
     ~InputVideo() = default;
 
     Chunk* operator()(tbb::flow_control& fc) const;
 
 private:
-    mutable std::vector<cv::Mat> vid_;
-    mutable std::vector<cv::Mat> vid2_;
-    mutable unsigned offset;
+    mutable std::vector<cv::VideoCapture> videos_;
 };
 
+/// Takes a chunk an create a new one after processing the frames
+/// of the first one
 class Transformer
 {
 public:
